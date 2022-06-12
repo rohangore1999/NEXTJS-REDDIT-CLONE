@@ -79,6 +79,21 @@ function Post({ post }: Props) {
 
     }
 
+    const displayVote = (data: any) => {
+        const votes: Vote[] = data?.getVotesByPostId
+        const displayNumber = votes?.reduce(
+            (total, vote) => (vote.upvote ? (total += 1) : (total -= 1))
+            , 0)
+        // if no vote then return 0
+        if (votes?.length === 0) return 0
+
+        // if current vote is 0 then check for last recent vote and if it is positive then make 1 or -1 for negative
+        if (displayNumber === 0) {
+            return votes[0]?.upvote ? 1 : -1
+        }
+
+        return displayNumber
+    }
 
     // while fetching data show loader
     if (!post)
@@ -93,10 +108,10 @@ function Post({ post }: Props) {
             <div className='flex cursor-pointer rounded-md border border-gray-300 bg-white shadow-sm hover:border hover:border-gray-600'>
                 {/* VOtes */}
                 <div className='flex flex-col items-center justify-start space-y-1 rounded-l-md bg-gray-50 p-4 text-gray-400'>
-                    <ArrowUpIcon onClick={() => upVote(true)} className={`voteButtons hover:text-red-400 ${vote && 'text-red-400'}`} />
-                    <p className='text-black font-bold text-xs'>0</p>
-                    <ArrowDownIcon onClick={() => upVote(false)} className={`voteButtons hover:text-blue-400 
-                    ${vote === false && 'text-blue-400'}`} />
+                    <ArrowUpIcon onClick={() => upVote(true)} className={`voteButtons hover:text-blue-400 ${vote && 'text-blue-400'}`} />
+                    <p className='text-black font-bold text-xs'>{displayVote(data)}</p>
+                    <ArrowDownIcon onClick={() => upVote(false)} className={`voteButtons hover:text-red-400 
+                    ${vote === false && 'text-red-400'}`} />
                 </div>
 
                 {/* Body */}
