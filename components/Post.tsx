@@ -1,15 +1,85 @@
 import { ArrowDownIcon, ArrowUpIcon, BookmarkIcon, ChatAltIcon, DotsHorizontalIcon, GiftIcon, ShareIcon } from '@heroicons/react/outline'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Avatar from './Avatar'
 import TimeAgo from 'react-timeago'
 import Link from 'next/link'
 import { Jelly } from "@uiball/loaders"
+import { useSession } from 'next-auth/react'
+import toast from 'react-hot-toast'
+import { useMutation, useQuery } from '@apollo/client'
+import { GET_ALL_VOTES_BY_POST_ID } from '../graphql/queries'
+import { ADD_VOTE } from '../graphql/mutation'
 
 type Props = {
     post: Post
 }
 
 function Post({ post }: Props) {
+    // get user session
+    const { data: session } = useSession()
+
+    // to get votes
+    const { data, loading } = useQuery(GET_ALL_VOTES_BY_POST_ID, {
+        variables: {
+            post_id: post?.id
+        }
+    })
+
+    // to add votes
+    const [addVotes] = useMutation(ADD_VOTE, {
+        refetchQueries: [GET_ALL_VOTES_BY_POST_ID, 'getVotesByPostId']
+    })
+
+    // intiallyundefine
+    const [vote, setVote] = useState<boolean>()
+
+
+    useEffect(() => {
+        const votes: Vote[] = data?.getVotesByPostId
+
+        // latest vote (as we sorted by newly created first in sql query)
+
+        // finding the vote which are equal or giveing by user who logged in
+        const vote = votes?.find((vote) => vote.username == session?.user?.name)?.upvote
+
+        setVote(vote)
+
+    }, [data])
+
+
+
+
+
+    const upVote = async (isUpvote: boolean) => {
+        // true -> voted up
+        // false -> voted down
+        // undefine -> havent voted yet
+        if (!session) {
+            toast("!You'll need to sign in to Vote")
+            return
+        }
+
+        // if already voted and again trying to vote then stop/return
+        if (vote && isUpvote) return
+
+        // if already voted as down/false and again trying to downvote/!upvote then stop/return
+        if (vote === false && !isUpvote) return
+
+        console.log(".. you are voting")
+
+
+        // vote happening
+        await addVotes({
+            variables: {
+                post_id: post.id,
+                username: session?.user?.name,
+                upvote: isUpvote,
+            }
+        })
+
+    }
+
+
     // while fetching data show loader
     if (!post)
         return (
@@ -23,9 +93,10 @@ function Post({ post }: Props) {
             <div className='flex cursor-pointer rounded-md border border-gray-300 bg-white shadow-sm hover:border hover:border-gray-600'>
                 {/* VOtes */}
                 <div className='flex flex-col items-center justify-start space-y-1 rounded-l-md bg-gray-50 p-4 text-gray-400'>
-                    <ArrowUpIcon className='voteButtons hover:text-red-400' />
+                    <ArrowUpIcon onClick={() => upVote(true)} className={`voteButtons hover:text-red-400 ${vote && 'text-red-400'}`} />
                     <p className='text-black font-bold text-xs'>0</p>
-                    <ArrowDownIcon className='voteButtons hover:text-blue-400' />
+                    <ArrowDownIcon onClick={() => upVote(false)} className={`voteButtons hover:text-blue-400 
+                    ${vote === false && 'text-blue-400'}`} />
                 </div>
 
                 {/* Body */}
