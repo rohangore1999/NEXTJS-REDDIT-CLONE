@@ -3,6 +3,7 @@ import React from 'react'
 import { BeakerIcon, MenuIcon } from '@heroicons/react/solid'
 import { StarIcon, BellIcon, ChatIcon, ChevronDownIcon, GlobeIcon, HomeIcon, PlusIcon, SearchIcon, SparklesIcon, SpeakerphoneIcon, VideoCameraIcon } from '@heroicons/react/outline'
 import { signIn, signOut, useSession } from 'next-auth/react'
+import Link from 'next/link'
 
 function Header() {
     // to get session if we logged in
@@ -14,8 +15,10 @@ function Header() {
             {/* img */}
             {/* flex-shrink-0 >> when we shrink window size never want image to shrink */}
             <div className='relative h-10 w-20 flex-shrink-0 cursor-pointer'>
-                {/* as layout is fill will capture entire screen so we made above div as relative to it will take that div only */}
-                <Image src={'https://links.papareact.com/fqy'} layout="fill" objectFit='contain' />
+                <Link href={'/'}>
+                    {/* as layout is fill will capture entire screen so we made above div as relative to it will take that div only */}
+                    <Image src={'https://links.papareact.com/fqy'} layout="fill" objectFit='contain' />
+                </Link>
             </div>
 
 

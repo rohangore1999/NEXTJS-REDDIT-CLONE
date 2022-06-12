@@ -14,6 +14,28 @@ type Post {
   subreddit_id: ID
   title: String
   username: String
+  
+  # this will return array of vote
+  votes: [Vote]
+  @materializer(
+    query: "getVotesByPostId"
+    arguments: [{name: "post_id", field: "id"}]
+  )
+
+  # comments
+  comments: [Comment]
+  @materializer(
+    query: "getCommetByPostId"
+    arguments: [{name: "post_id", field: "id"}]
+  )
+
+  # nested query which will fetch based on id -> getSubredditListById along with the POST
+  # mapping post with subreddit
+  subreddit: [Subreddit]
+    @materializer(
+      query: "getSubredditListById"
+      arguments: [{ name: "id", field: "subreddit_id" }]
+    )
 }
 
 type Subreddit {
@@ -38,6 +60,49 @@ type Query {
       table: "comment"
       configuration: "postgresql_config"
     )
+
+
+# ******** Custom QUERY ************
+
+"""
+How to query based on subreddit id
+"""
+
+getSubredditListById(id: ID!): [Subreddit]
+  @dbquery(
+    type: "postgresql"
+    query: """
+      select * from "subreddit" where "id" = $1
+    """
+    configuration: "postgresql_config"
+  )
+
+"""
+How to query based on Votes
+"""
+# getting votes and ordering by most recent
+getVotesByPostId(post_id: ID!): [Vote]
+  @dbquery(
+    type: "postgresql"
+    query: """
+      select * from "vote" where "post_id" = $1
+      order by "created_at" desc
+    """
+    configuration: "postgresql_config"
+  )
+
+# getting comments based on post_id we passed
+getCommetByPostId(post_id: ID!): [Comment]
+  @dbquery(
+    type: "postgresql"
+    query: """
+      select * from "comment" where "post_id" = $1
+    """
+    configuration: "postgresql_config"
+  )
+
+
+
   """
   This query is an example of how to simply paginate your responses.
   """
@@ -73,13 +138,47 @@ type Query {
       """
       configuration: "postgresql_config"
     )
+
+    # getting post order by timestamp
   getPostList: [Post]
     @dbquery(
       type: "postgresql"
-      schema: "public"
-      table: "post"
+      query: """
+        select * from "post"
+        order by "post"."created_at" desc
+      """
       configuration: "postgresql_config"
     )
+
+
+    # Join quering..
+    # join two table where primary key and foreign key matched
+    # "subreddit"."id" > foreign key = "post"."subreddit_id" > primary key
+    # where topic = which we passed in
+
+    getPostListByTopic(topic: String!): [Post]
+    @dbquery(
+      type: "postgresql"
+      query: """
+        select *, "post".id as id from "post"
+        join "subreddit" on "subreddit"."id" = "post"."subreddit_id"
+        where "subreddit"."topic"=$1
+        order by "post"."created_at" desc
+      """
+      configuration: "postgresql_config"
+    )
+
+
+    getPostsListByPostId(post_id: ID!): Post
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select * from "post"
+      where "post"."id" = $1
+      """
+      configuration: "postgresql_config"
+    )
+
 
     # Custom query...........
     getSubredditListByTopic(topic:String!): [Subreddit]
@@ -131,7 +230,7 @@ type Mutation {
     )
 
 
-  # custom mutation
+  #************* custom mutation ******************
   insertSubreddit(
     topic: String!
     ): Subreddit

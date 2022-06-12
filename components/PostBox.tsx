@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { useMutation } from '@apollo/client'
 import { ADD_POST, ADD_SUBREDDIT } from '../graphql/mutation'
 import client from '../apollo-client'
-import { GET_SUBREDDIT_BY_TOPIC } from '../graphql/queries'
+import { GET_ALL_POST, GET_SUBREDDIT_BY_TOPIC } from '../graphql/queries'
 import toast from 'react-hot-toast'
 
 
@@ -19,13 +19,22 @@ type FormData = {
     subreddit: string
 }
 
-function PostBox() {
+type Props = {
+    subreddit?: string
+}
+
+function PostBox({ subreddit }: Props) {
     // session keys
     const { data: session } = useSession()
 
     // useMutation is the part of GRAPHQL as it means you needs to add delete data
     // here we are adding post so useMutation gives us function >> addPost
-    const [addPost] = useMutation(ADD_POST)
+    const [addPost] = useMutation(ADD_POST, {
+        refetchQueries: [//when ever we add the post it refetch and call getPostList query
+            GET_ALL_POST,
+            'getPostList'
+        ]
+    })
 
     // to add subreddit
     const [addSubreddit] = useMutation(ADD_SUBREDDIT)
@@ -56,7 +65,7 @@ function PostBox() {
             const { data: { getSubredditListByTopic } } = await client.query({
                 query: GET_SUBREDDIT_BY_TOPIC,
                 variables: {
-                    topic: formData.subreddit
+                    topic: subreddit || formData.subreddit
                 }
             })
 
@@ -121,13 +130,14 @@ function PostBox() {
             setValue('postImage', '')
             setValue('postTitle', '')
             setValue('subreddit', '')
-            
+
             // after creating above it will show below messages
             toast.success("New Post Created!", {
                 id: notification
             })
 
         } catch (error) {
+            console.log(error)
             toast.error('Whoops something goes wrong', {
                 id: notification
             })
@@ -143,7 +153,7 @@ function PostBox() {
                 <input
                     // connect to form
                     {...register('postTitle', { required: true })}
-                    disabled={!session} className="flex-1 rounded-md bg-gray-50 p-2 pl-5 outline-none" type="text" placeholder={session ? 'Create a Post by entering title!' : 'Sign in to Post'} />
+                    disabled={!session} className="flex-1 rounded-md bg-gray-50 p-2 pl-5 outline-none" type="text" placeholder={session ? subreddit ? `Create a post in r/${subreddit}` : 'Create a Post by entering title!' : 'Sign in to Post'} />
 
                 <PhotographIcon onClick={() => setImageBoxOpen(!imageBoxOpen)} className={`h-6 text-gray-300 cursor-pointer ${imageBoxOpen && ('text-blue-300')}`} />
                 <LinkIcon className='h-6 text-gray-300' />
@@ -162,12 +172,13 @@ function PostBox() {
                     </div>
 
                     {/* subreddit */}
-                    <div className='flex flex-col py-2'>
+                    {!subreddit && (
                         <div className='flex items-center px-2'>
                             <p className='min-w-[90px]'>Subreddit:</p>
                             <input className='m-2 flex-1 bg-blue-50 p-2 outline-none' {...register('subreddit', { required: true })} type="text" placeholder='i.e reactjs' />
                         </div>
-                    </div>
+                    )}
+
 
                     {/* if img is open */}
                     {
@@ -204,8 +215,9 @@ function PostBox() {
                     )}
 
                 </div>
-            )}
-        </form>
+            )
+            }
+        </form >
     )
 }
 
