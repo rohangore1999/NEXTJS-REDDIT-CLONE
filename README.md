@@ -1,3 +1,11 @@
+NEXTJS-REDDIT-CLONE using NextJS, GRAPHQL and STEPZEN(to simplify GRAPHQL queries), SUPABASE(for Relational Database i.e. SQL), TYPESCRIPT, TAILWIND CSS
+
+DEPLOYED ON VERCEL ~ https://nextjs-reddit-clone-iota.vercel.app/
+
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 # Next.js + Tailwind CSS Example
 
 This example shows how to use [Tailwind CSS](https://tailwindcss.com/) [(v3.0)](https://tailwindcss.com/blog/tailwindcss-v3) with Next.js. It follows the steps outlined in the official [Tailwind docs](https://tailwindcss.com/docs/guides/nextjs).
